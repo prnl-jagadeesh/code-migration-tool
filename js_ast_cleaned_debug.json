@@ -1,0 +1,61 @@
+{
+  "body": [
+    {
+      "async": false,
+      "body": {
+        "body": [
+          {
+            "expression": {
+              "arguments": [
+                {
+                  "type": "Literal",
+                  "value": "Hi"
+                }
+              ],
+              "callee": {
+                "computed": false,
+                "object": {
+                  "name": "console",
+                  "type": "Identifier"
+                },
+                "property": {
+                  "name": "log",
+                  "type": "Identifier"
+                },
+                "type": "MemberExpression"
+              },
+              "type": "CallExpression"
+            },
+            "type": "ExpressionStatement"
+          },
+          {
+            "argument": {
+              "left": {
+                "type": "Literal",
+                "value": "Hello, "
+              },
+              "operator": "+",
+              "right": {
+                "name": "name",
+                "type": "Identifier"
+              },
+              "type": "BinaryExpression"
+            },
+            "type": "ReturnStatement"
+          }
+        ],
+        "type": "BlockStatement"
+      },
+      "expression": false,
+      "generator": false,
+      "params": [
+        {
+          "name": "name",
+          "type": "Identifier"
+        }
+      ],
+      "type": "FunctionDeclaration"
+    }
+  ],
+  "type": "Program"
+}
