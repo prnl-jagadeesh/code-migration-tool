@@ -55,10 +55,10 @@ SYNTAX_KIND_TO_STRING_MAP = {
     "TSTypeAnnotation": 18000, "TSParameterProperty": 16300,
 }
 BINARY_OPERATOR_MAP = {
-    SYNTAX_KIND_TO_STRING_MAP.get(39): "+", SYNTAX_KIND_TO_STRING_MAP.get(40): "-", 
+    SYNTAX_KIND_TO_STRING_MAP.get(39): "+", SYNTAX_KIND_TO_STRING_MAP.get(40): "-",
     SYNTAX_KIND_TO_STRING_MAP.get(41): "*", SYNTAX_KIND_TO_STRING_MAP.get(43): "/",
     SYNTAX_KIND_TO_STRING_MAP.get(44): "%", SYNTAX_KIND_TO_STRING_MAP.get(42): "**",
-    SYNTAX_KIND_TO_STRING_MAP.get(55): "&&", SYNTAX_KIND_TO_STRING_MAP.get(56): "||", 
+    SYNTAX_KIND_TO_STRING_MAP.get(55): "&&", SYNTAX_KIND_TO_STRING_MAP.get(56): "||",
     SYNTAX_KIND_TO_STRING_MAP.get(60): "??",
 }
 
@@ -104,7 +104,7 @@ def _create_normalized_shell(original_node, is_ts_node):
     """
     shell = {}
     node_kind_numeric = original_node.get("kind") if is_ts_node else None
-    
+
     # Determine Esprima type and basic structure
     esprima_type = None
     if is_ts_node:
@@ -123,7 +123,7 @@ def _create_normalized_shell(original_node, is_ts_node):
             return _remove_ts_types_from_ast_recursive(original_node.get('name'), False, original_node.get('name'), True)
         elif node_kind_numeric == 298: esprima_type = "Program"
         else: # For unmapped TS nodes, copy essential fields if they exist
-            shell['kind_original_ts'] = node_kind_numeric 
+            shell['kind_original_ts'] = node_kind_numeric
             # Copy other potentially relevant fields if not handled by PROPERTIES_TO_REMOVE
             for k,v in original_node.items():
                 if k not in ['kind', 'pos', 'end', 'flags', 'parent', 'modifiers'] and k not in PROPERTIES_TO_REMOVE:
@@ -196,13 +196,13 @@ def _remove_ts_types_from_ast_recursive(node, is_top_level=False, original_node_
     if not isinstance(node, dict): return node
 
     current_original_node = original_node_for_shell if original_node_for_shell is not None else node
-    
+
     # If this node itself is a type to be removed (based on its original kind/type)
     node_kind_numeric = current_original_node.get('kind')
     is_ts_node = node_kind_numeric is not None
     node_kind_str = SYNTAX_KIND_TO_STRING_MAP.get(node_kind_numeric) if is_ts_node else None
     if node_kind_str and node_kind_str in TS_NODE_KINDS_TO_REMOVE_STRINGS: return None
-    
+
     node_type_val = current_original_node.get('type') # Esprima type
     if isinstance(node_type_val, str) and node_type_val in TS_NODE_KINDS_TO_REMOVE_STRINGS: return None
     if node_type_val == "ExpressionStatement" and current_original_node.get("directive"): return None
@@ -211,7 +211,7 @@ def _remove_ts_types_from_ast_recursive(node, is_top_level=False, original_node_
     # Create a normalized shell if not already provided (i.e., not a recursive call on a shell's child)
     # Pass is_ts_node to guide shell creation
     processed_node = _create_normalized_shell(current_original_node, is_ts_node) if not is_already_shell else node
-    
+
     if not isinstance(processed_node, dict): # If shell creation returned a final value (e.g. Parameter -> Identifier)
         return processed_node
 
@@ -222,31 +222,31 @@ def _remove_ts_types_from_ast_recursive(node, is_top_level=False, original_node_
 
     # Handle modifiers for TS nodes based on original_node's modifiers
     if is_ts_node and 'modifiers' in current_original_node and isinstance(current_original_node['modifiers'], list):
-        new_mods = [mod for mod_node in current_original_node['modifiers'] 
-                    if isinstance(mod_node, dict) and mod_node.get('kind') not in TS_MODIFIER_KINDS_TO_REMOVE_NUMERIC 
+        new_mods = [mod for mod_node in current_original_node['modifiers']
+                    if isinstance(mod_node, dict) and mod_node.get('kind') not in TS_MODIFIER_KINDS_TO_REMOVE_NUMERIC
                     and (mod := _remove_ts_types_from_ast_recursive(mod_node, False, mod_node)) is not None]
         if new_mods: final_dict['modifiers'] = new_mods
-    
+
     # Iterate over keys in the normalized shell to process its children
     for key, value_from_shell in processed_node.items():
-        if key == 'type' or key == 'modifiers' and 'modifiers' in final_dict : continue 
+        if key == 'type' or key == 'modifiers' and 'modifiers' in final_dict : continue
         if key in PROPERTIES_TO_REMOVE: continue
-        
+
         # Contextual property handling (mostly for metadata on original TS nodes)
         # These checks should be on current_original_node not node_kind_numeric from shell
         original_kind_for_key_check = current_original_node.get('kind')
-        if key == 'flags' and original_kind_for_key_check != 252 : continue 
-        if key == 'id' and original_kind_for_key_check == 298 and value_from_shell == 0 : continue 
-        
+        if key == 'flags' and original_kind_for_key_check != 252 : continue
+        if key == 'id' and original_kind_for_key_check == 298 and value_from_shell == 0 : continue
+
         # Recursively clean the children obtained from the shell
         cleaned_child = _remove_ts_types_from_ast_recursive(value_from_shell, False, value_from_shell, True) # Pass child as its own original_node_for_shell
-        
+
         if cleaned_child is not None:
             if isinstance(cleaned_child, list) and not cleaned_child and \
                key not in ['params', 'arguments', 'body', 'members', 'elements', 'declarations', 'properties', 'statements']:
                 continue
             final_dict[key] = cleaned_child
-            
+
     # Ensure essential Esprima structures exist
     if final_dict.get("type") == "Program": final_dict.setdefault('body', [])
     if final_dict.get("type") in ["FunctionDeclaration", "FunctionExpression", "ArrowFunctionExpression"]:
@@ -273,24 +273,24 @@ def compare_asts(js_ast: dict, ts_ast: dict) -> bool:
     if not js_ast or not ts_ast: return False
 
     js_ast_cleaned = _remove_ts_types_from_ast_recursive(copy.deepcopy(js_ast), True)
-    if js_ast_cleaned is None: js_ast_cleaned = {"type": "Program", "body": []} 
-    
+    if js_ast_cleaned is None: js_ast_cleaned = {"type": "Program", "body": []}
+
     ts_ast_cleaned = _remove_ts_types_from_ast_recursive(copy.deepcopy(ts_ast), True)
     if ts_ast_cleaned is None: ts_ast_cleaned = {"type": "Program", "body": []}
-    
+
     is_js_empty = not js_ast_cleaned.get("body") and js_ast_cleaned.get("type") == "Program"
     is_ts_empty = not ts_ast_cleaned.get("body") and ts_ast_cleaned.get("type") == "Program"
 
     if is_js_empty and is_ts_empty: return True
     if is_js_empty != is_ts_empty: return False
-        
+
     try:
         js_ast_str = json.dumps(js_ast_cleaned, sort_keys=True)
         ts_ast_str = json.dumps(ts_ast_cleaned, sort_keys=True)
     except Exception as e:
         print(f"Error during AST canonicalization or JSON dump: {e}")
         return False
-    
+
     if js_ast_str == ts_ast_str:
         return True
     else:
@@ -300,8 +300,8 @@ def compare_asts(js_ast: dict, ts_ast: dict) -> bool:
                 first_js_stmt = js_ast_cleaned["body"][0]
                 if isinstance(first_js_stmt, dict) and first_js_stmt.get("type") == "FunctionDeclaration":
                     if first_js_stmt.get("id", {}).get("name") == "greet": is_test_match_case = True
-        except Exception: pass 
-        
+        except Exception: pass
+
         if is_test_match_case: # Only print for the "test_match" case
             print("ASTs differ. Canonical JSONs for 'test_match' case:")
             print("JS AST (cleaned for test_match.js):\n", json.dumps(js_ast_cleaned, sort_keys=True, indent=2))
@@ -335,7 +335,7 @@ if __name__ == "__main__":
         print(f"    Should NOT Match -> Result: {not result_struct_diff}")
     else:
         print("Could not generate ASTs for 'test_structural_diff' pair. JS AST valid:", bool(js_struct_ast), "TS AST valid:", bool(ts_struct_ast))
-    
+
     files_to_clean = [
         "test_match.js", "test_match.tsx", "test_structural_diff.js", "test_structural_diff.tsx",
         "js_match_cleaned_debug.json", "ts_match_cleaned_debug.json"
