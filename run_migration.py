@@ -26,12 +26,12 @@ def load_env_and_setup_api_key():
         logging.error("Error: OPENAI_API_KEY environment variable not set.")
         logging.error("Please create a .env file or set the environment variable directly.")
         sys.exit(1)
-    
+
     try:
         client = OpenAI(api_key=api_key)
         # Test the API key with a simple call, e.g., listing models (optional, can incur cost/quota usage)
         # For this test, we'll assume the key is valid if client initializes.
-        # client.models.list() 
+        # client.models.list()
         logging.info("OpenAI API client initialized successfully.")
     except openai.AuthenticationError as e:
         logging.error(f"OpenAI API Authentication Error: {e}. Check your API key.")
@@ -59,7 +59,7 @@ def migrate_js_to_tsx(file_path):
         "Return only the code. Do not include explanations or markdown.\n\n"
         f"{js_code}"
     )
-    
+
     # Using the new API structure for chat completions
     response = client.chat.completions.create(
         model="gpt-4", # Model remains gpt-4
@@ -69,7 +69,7 @@ def migrate_js_to_tsx(file_path):
         ],
         temperature=0
     )
-    
+
     # Accessing the response content according to the new structure
     return response.choices[0].message.content.strip()
 
@@ -81,13 +81,13 @@ def main():
 
     parser = argparse.ArgumentParser(description="Migrate React JS components to TSX using OpenAI API.")
     parser.add_argument(
-        "--input_dir", 
-        default="extracted", 
+        "--input_dir",
+        default="extracted",
         help="Directory containing JavaScript files to migrate. (default: 'extracted')"
     )
     parser.add_argument(
-        "--output_dir", 
-        default="migrated", 
+        "--output_dir",
+        default="migrated",
         help="Directory to save migrated TSX files. (default: 'migrated')"
     )
     args = parser.parse_args()
@@ -99,7 +99,7 @@ def main():
     logging.info(f"Output directory '{args.output_dir}' ensured.")
 
     logging.info(f"Scanning '{args.input_dir}' for .js files...")
-    
+
     try:
         js_files = [f for f in os.listdir(args.input_dir) if f.endswith(".js")]
     except FileNotFoundError:
@@ -114,7 +114,7 @@ def main():
         return
 
     logging.info(f"Found {len(js_files)} .js files to migrate.")
-    
+
     successful_migrations = 0
     failed_migrations = 0
 
@@ -126,7 +126,7 @@ def main():
         logging.info(f"Migrating '{input_file_path}' to '{output_file_path}'...")
         try:
             tsx_code = migrate_js_to_tsx(input_file_path)
-            
+
             if tsx_code.startswith("```tsx"):
                 tsx_code = tsx_code[len("```tsx"):]
                 if tsx_code.endswith("```"):
